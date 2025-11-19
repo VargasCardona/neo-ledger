@@ -2,7 +2,7 @@ package guitars
 
 import (
 	"net/http"
-	"encoding/json"
+	"github.com/vargascardona/neo-ledger/internal/json"
 )
 
 type handler struct {
@@ -16,9 +16,9 @@ func NewHandler(service Service) *handler {
 }
 
 func (h *handler) ListGuitars(w http.ResponseWriter, r *http.Request) {
-	guitars := []string{"Gibson", "Fender"}
-
-	w.WriteHeader(http.StatusOK)
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(guitars)
+	//guitars := struct {
+  //  Guitars []string 'json:"guitars'
+	//}{}
+  guitars := []string{"Gibson", "Fender"}
+	json.Write(w, http.StatusOK, guitars)
 }
