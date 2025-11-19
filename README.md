@@ -7,8 +7,12 @@
 A simple, REST microservice written in Go to track guitars. 
 
 ## Tech Stack
-- Go
-- Chi – lightweight, idiomatic router with a middleware ecosystem
+- **Go** – 1.25+
+- **Chi** – lightweight, idiomatic router with a rich middleware ecosystem
+- **sqlc** – generates type-safe Go code from SQL queries (zero ORM, full PostgreSQL power)
+- **Goose** – simple, reliable database migrations (versioned SQL + optional Go migrations)
+- **pgx** – high-performance PostgreSQL driver (used under the hood by sqlc)
+- **PostgreSQL** – 17+
 
 ## Contributing
 
