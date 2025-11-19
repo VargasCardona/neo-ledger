@@ -23,7 +23,8 @@ func (app *application) mount() http.Handler {
 		w.Write([]byte("I'm good"))
 	})
 
-	guitarHandler := guitars.NewHandler(nil)
+	guitarService := guitars.NewService()
+	guitarHandler := guitars.NewHandler(guitarService)
 	r.Get("/guitars", guitarHandler.ListGuitars)
 
 	return r
