@@ -1,0 +1,60 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Go workspace files
+go.work
+go.work.sum
+
+# Test binary
+*.test
+
+# Coverage files
+*.coverprofile
+*.out
+coverage.*
+
+# Build artifacts
+/bin/
+/dist/
+/build/
+/tmp/
+
+# Dependency directories
+/vendor/
+
+# Go module download cache
+/.go/pkg/mod/
+
+# Go build cache
+/.go/
+
+# Editor / OS garbage
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*~
+
+# Local env files
+.env
+.env.local
+.env.*.local
+
+# Migration files
+*.migration
+
+# Air temp files
+tmp/
+.air.toml
+
+# Logs
+*.log
+logs/
+
+# pprof / profiling outputs
+*.pprof
