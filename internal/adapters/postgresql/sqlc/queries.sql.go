@@ -9,8 +9,56 @@ import (
 	"context"
 )
 
+const createGuitar = `-- name: CreateGuitar :one
+INSERT INTO guitars (
+    brand,
+    model,
+    year,
+    notes
+) VALUES (
+    $1, $2, $3, $4
+)
+RETURNING id, brand, model, year, notes, created_at, updated_at
+`
+
+type CreateGuitarParams struct {
+	Brand string  `json:"brand"`
+	Model string  `json:"model"`
+	Year  *int16  `json:"year"`
+	Notes *string `json:"notes"`
+}
+
+func (q *Queries) CreateGuitar(ctx context.Context, arg CreateGuitarParams) (Guitar, error) {
+	row := q.db.QueryRow(ctx, createGuitar,
+		arg.Brand,
+		arg.Model,
+		arg.Year,
+		arg.Notes,
+	)
+	var i Guitar
+	err := row.Scan(
+		&i.ID,
+		&i.Brand,
+		&i.Model,
+		&i.Year,
+		&i.Notes,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const deleteGuitar = `-- name: DeleteGuitar :exec
+DELETE FROM guitars WHERE id = $1
+`
+
+func (q *Queries) DeleteGuitar(ctx context.Context, id int64) error {
+	_, err := q.db.Exec(ctx, deleteGuitar, id)
+	return err
+}
+
 const findGuitarByID = `-- name: FindGuitarByID :one
-SELECT id, brand, model, name, year, country_of_origin, body_type, body_wood, top_wood, neck_wood, fretboard_wood, scale_length, fretboard_radius, pickups_config, pickup_brand, bridge_type, tuners, color, finish, pickguard, condition, purchase_price, purchase_date, selling_price, is_for_sale, is_sold, sold_date, sold_to, weight_kg, serial_number, case_type, modifications, notes, created_at, updated_at FROM guitars WHERE id = $1
+SELECT id, brand, model, year, notes, created_at, updated_at FROM guitars WHERE id = $1
 `
 
 func (q *Queries) FindGuitarByID(ctx context.Context, id int64) (Guitar, error) {
@@ -20,35 +68,7 @@ func (q *Queries) FindGuitarByID(ctx context.Context, id int64) (Guitar, error) 
 		&i.ID,
 		&i.Brand,
 		&i.Model,
-		&i.Name,
 		&i.Year,
-		&i.CountryOfOrigin,
-		&i.BodyType,
-		&i.BodyWood,
-		&i.TopWood,
-		&i.NeckWood,
-		&i.FretboardWood,
-		&i.ScaleLength,
-		&i.FretboardRadius,
-		&i.PickupsConfig,
-		&i.PickupBrand,
-		&i.BridgeType,
-		&i.Tuners,
-		&i.Color,
-		&i.Finish,
-		&i.Pickguard,
-		&i.Condition,
-		&i.PurchasePrice,
-		&i.PurchaseDate,
-		&i.SellingPrice,
-		&i.IsForSale,
-		&i.IsSold,
-		&i.SoldDate,
-		&i.SoldTo,
-		&i.WeightKg,
-		&i.SerialNumber,
-		&i.CaseType,
-		&i.Modifications,
 		&i.Notes,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -57,7 +77,7 @@ func (q *Queries) FindGuitarByID(ctx context.Context, id int64) (Guitar, error) 
 }
 
 const listGuitars = `-- name: ListGuitars :many
-SELECT id, brand, model, name, year, country_of_origin, body_type, body_wood, top_wood, neck_wood, fretboard_wood, scale_length, fretboard_radius, pickups_config, pickup_brand, bridge_type, tuners, color, finish, pickguard, condition, purchase_price, purchase_date, selling_price, is_for_sale, is_sold, sold_date, sold_to, weight_kg, serial_number, case_type, modifications, notes, created_at, updated_at FROM guitars
+SELECT id, brand, model, year, notes, created_at, updated_at FROM guitars
 `
 
 func (q *Queries) ListGuitars(ctx context.Context) ([]Guitar, error) {
@@ -73,35 +93,7 @@ func (q *Queries) ListGuitars(ctx context.Context) ([]Guitar, error) {
 			&i.ID,
 			&i.Brand,
 			&i.Model,
-			&i.Name,
 			&i.Year,
-			&i.CountryOfOrigin,
-			&i.BodyType,
-			&i.BodyWood,
-			&i.TopWood,
-			&i.NeckWood,
-			&i.FretboardWood,
-			&i.ScaleLength,
-			&i.FretboardRadius,
-			&i.PickupsConfig,
-			&i.PickupBrand,
-			&i.BridgeType,
-			&i.Tuners,
-			&i.Color,
-			&i.Finish,
-			&i.Pickguard,
-			&i.Condition,
-			&i.PurchasePrice,
-			&i.PurchaseDate,
-			&i.SellingPrice,
-			&i.IsForSale,
-			&i.IsSold,
-			&i.SoldDate,
-			&i.SoldTo,
-			&i.WeightKg,
-			&i.SerialNumber,
-			&i.CaseType,
-			&i.Modifications,
 			&i.Notes,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -114,4 +106,45 @@ func (q *Queries) ListGuitars(ctx context.Context) ([]Guitar, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateGuitar = `-- name: UpdateGuitar :one
+UPDATE guitars
+SET
+    brand      = $2,
+    model      = $3,
+    year       = $4,
+    notes      = $5,
+    updated_at = NOW()
+WHERE id = $1
+RETURNING id, brand, model, year, notes, created_at, updated_at
+`
+
+type UpdateGuitarParams struct {
+	ID    int64   `json:"id"`
+	Brand string  `json:"brand"`
+	Model string  `json:"model"`
+	Year  *int16  `json:"year"`
+	Notes *string `json:"notes"`
+}
+
+func (q *Queries) UpdateGuitar(ctx context.Context, arg UpdateGuitarParams) (Guitar, error) {
+	row := q.db.QueryRow(ctx, updateGuitar,
+		arg.ID,
+		arg.Brand,
+		arg.Model,
+		arg.Year,
+		arg.Notes,
+	)
+	var i Guitar
+	err := row.Scan(
+		&i.ID,
+		&i.Brand,
+		&i.Model,
+		&i.Year,
+		&i.Notes,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }

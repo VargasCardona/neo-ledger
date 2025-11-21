@@ -9,8 +9,11 @@ import (
 )
 
 type Querier interface {
+	CreateGuitar(ctx context.Context, arg CreateGuitarParams) (Guitar, error)
+	DeleteGuitar(ctx context.Context, id int64) error
 	FindGuitarByID(ctx context.Context, id int64) (Guitar, error)
 	ListGuitars(ctx context.Context) ([]Guitar, error)
+	UpdateGuitar(ctx context.Context, arg UpdateGuitarParams) (Guitar, error)
 }
 
 var _ Querier = (*Queries)(nil)

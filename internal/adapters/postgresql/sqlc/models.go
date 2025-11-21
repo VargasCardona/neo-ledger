@@ -9,39 +9,11 @@ import (
 )
 
 type Guitar struct {
-	ID              int64              `json:"id"`
-	Brand           string             `json:"brand"`
-	Model           string             `json:"model"`
-	Name            pgtype.Text        `json:"name"`
-	Year            pgtype.Int2        `json:"year"`
-	CountryOfOrigin pgtype.Text        `json:"country_of_origin"`
-	BodyType        pgtype.Text        `json:"body_type"`
-	BodyWood        pgtype.Text        `json:"body_wood"`
-	TopWood         pgtype.Text        `json:"top_wood"`
-	NeckWood        pgtype.Text        `json:"neck_wood"`
-	FretboardWood   pgtype.Text        `json:"fretboard_wood"`
-	ScaleLength     pgtype.Numeric     `json:"scale_length"`
-	FretboardRadius pgtype.Numeric     `json:"fretboard_radius"`
-	PickupsConfig   pgtype.Text        `json:"pickups_config"`
-	PickupBrand     pgtype.Text        `json:"pickup_brand"`
-	BridgeType      pgtype.Text        `json:"bridge_type"`
-	Tuners          pgtype.Text        `json:"tuners"`
-	Color           pgtype.Text        `json:"color"`
-	Finish          pgtype.Text        `json:"finish"`
-	Pickguard       pgtype.Text        `json:"pickguard"`
-	Condition       pgtype.Text        `json:"condition"`
-	PurchasePrice   pgtype.Numeric     `json:"purchase_price"`
-	PurchaseDate    pgtype.Date        `json:"purchase_date"`
-	SellingPrice    pgtype.Numeric     `json:"selling_price"`
-	IsForSale       pgtype.Bool        `json:"is_for_sale"`
-	IsSold          pgtype.Bool        `json:"is_sold"`
-	SoldDate        pgtype.Date        `json:"sold_date"`
-	SoldTo          pgtype.Text        `json:"sold_to"`
-	WeightKg        pgtype.Numeric     `json:"weight_kg"`
-	SerialNumber    pgtype.Text        `json:"serial_number"`
-	CaseType        pgtype.Text        `json:"case_type"`
-	Modifications   pgtype.Text        `json:"modifications"`
-	Notes           pgtype.Text        `json:"notes"`
-	CreatedAt       pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
+	ID        int64              `json:"id"`
+	Brand     string             `json:"brand"`
+	Model     string             `json:"model"`
+	Year      *int16             `json:"year"`
+	Notes     *string            `json:"notes"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }

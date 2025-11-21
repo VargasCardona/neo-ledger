@@ -6,7 +6,9 @@ import (
 	"time"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/jackc/pgx/v5"
 	"github.com/vargascardona/neo-ledger/internal/guitars"
+	repo "github.com/vargascardona/neo-ledger/internal/adapters/postgresql/sqlc"
 )
 
 func (app *application) mount() http.Handler {
@@ -23,9 +25,13 @@ func (app *application) mount() http.Handler {
 		w.Write([]byte("I'm good"))
 	})
 
-	guitarService := guitars.NewService()
+	guitarService := guitars.NewService(repo.New(app.db), app.db)
 	guitarHandler := guitars.NewHandler(guitarService)
 	r.Get("/guitars", guitarHandler.ListGuitars)
+	r.Get("/guitars/{id}", guitarHandler.FindGuitarByID)
+	r.Post("/guitars", guitarHandler.CreateGuitar)
+	r.Patch("/guitars/{id}", guitarHandler.UpdateGuitar)
+	r.Delete("/guitars/{id}", guitarHandler.DeleteGuitar)
 
 	return r
 }
@@ -46,6 +52,7 @@ func (app *application) run(h http.Handler) error {
 
 type application struct {
 	config config
+	db *pgx.Conn
 }
 
 type config struct {
