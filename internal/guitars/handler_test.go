@@ -10,43 +10,46 @@ import (
 	"testing"
 
 	"github.com/go-chi/chi/v5"
+	repo "github.com/vargascardona/neo-ledger/internal/adapters/postgresql/sqlc"
 )
 
 // MockService is a mock implementation of the Service interface
 type MockService struct {
-	ListGuitarsFunc     func(ctx context.Context) ([]Guitar, error)
-	FindGuitarByIDFunc  func(ctx context.Context, id int) (Guitar, error)
-	CreateGuitarFunc    func(ctx context.Context, guitar Guitar) (Guitar, error)
-	UpdateGuitarFunc    func(ctx context.Context, guitar Guitar) (Guitar, error)
+	ListGuitarsFunc     func(ctx context.Context) ([]repo.Guitar, error)
+	FindGuitarByIDFunc  func(ctx context.Context, id int) (repo.Guitar, error)
+	CreateGuitarFunc    func(ctx context.Context, guitar Guitar) (repo.Guitar, error)
+	UpdateGuitarFunc    func(ctx context.Context, guitar Guitar) (repo.Guitar, error)
 	DeleteGuitarFunc    func(ctx context.Context, id int) error
+	DisplayNameFunc     func(ctx context.Context, g repo.Guitar) string
+	IsVintageFunc       func(ctx context.Context, g repo.Guitar) bool
 }
 
-func (m *MockService) ListGuitars(ctx context.Context) ([]Guitar, error) {
+func (m *MockService) ListGuitars(ctx context.Context) ([]repo.Guitar, error) {
 	if m.ListGuitarsFunc != nil {
 		return m.ListGuitarsFunc(ctx)
 	}
 	return nil, nil
 }
 
-func (m *MockService) FindGuitarByID(ctx context.Context, id int) (Guitar, error) {
+func (m *MockService) FindGuitarByID(ctx context.Context, id int) (repo.Guitar, error) {
 	if m.FindGuitarByIDFunc != nil {
 		return m.FindGuitarByIDFunc(ctx, id)
 	}
-	return Guitar{}, nil
+	return repo.Guitar{}, nil
 }
 
-func (m *MockService) CreateGuitar(ctx context.Context, guitar Guitar) (Guitar, error) {
+func (m *MockService) CreateGuitar(ctx context.Context, guitar Guitar) (repo.Guitar, error) {
 	if m.CreateGuitarFunc != nil {
 		return m.CreateGuitarFunc(ctx, guitar)
 	}
-	return Guitar{}, nil
+	return repo.Guitar{}, nil
 }
 
-func (m *MockService) UpdateGuitar(ctx context.Context, guitar Guitar) (Guitar, error) {
+func (m *MockService) UpdateGuitar(ctx context.Context, guitar Guitar) (repo.Guitar, error) {
 	if m.UpdateGuitarFunc != nil {
 		return m.UpdateGuitarFunc(ctx, guitar)
 	}
-	return Guitar{}, nil
+	return repo.Guitar{}, nil
 }
 
 func (m *MockService) DeleteGuitar(ctx context.Context, id int) error {
@@ -54,6 +57,20 @@ func (m *MockService) DeleteGuitar(ctx context.Context, id int) error {
 		return m.DeleteGuitarFunc(ctx, id)
 	}
 	return nil
+}
+
+func (m *MockService) DisplayName(ctx context.Context, g repo.Guitar) string {
+	if m.DisplayNameFunc != nil {
+		return m.DisplayNameFunc(ctx, g)
+	}
+	return ""
+}
+
+func (m *MockService) IsVintage(ctx context.Context, g repo.Guitar) bool {
+	if m.IsVintageFunc != nil {
+		return m.IsVintageFunc(ctx, g)
+	}
+	return false
 }
 
 func TestListGuitars(t *testing.T) {
@@ -66,8 +83,8 @@ func TestListGuitars(t *testing.T) {
 		{
 			name: "success",
 			mockService: &MockService{
-				ListGuitarsFunc: func(ctx context.Context) ([]Guitar, error) {
-					return []Guitar{
+				ListGuitarsFunc: func(ctx context.Context) ([]repo.Guitar, error) {
+					return []repo.Guitar{
 						{ID: 1, Brand: "Fender", Model: "Stratocaster"},
 						{ID: 2, Brand: "Gibson", Model: "Les Paul"},
 					}, nil
@@ -78,7 +95,7 @@ func TestListGuitars(t *testing.T) {
 		{
 			name: "service error",
 			mockService: &MockService{
-				ListGuitarsFunc: func(ctx context.Context) ([]Guitar, error) {
+				ListGuitarsFunc: func(ctx context.Context) ([]repo.Guitar, error) {
 					return nil, errors.New("database error")
 				},
 			},
@@ -112,8 +129,8 @@ func TestFindGuitarByID(t *testing.T) {
 			name:     "success",
 			guitarID: "1",
 			mockService: &MockService{
-				FindGuitarByIDFunc: func(ctx context.Context, id int) (Guitar, error) {
-					return Guitar{ID: 1, Brand: "Fender", Model: "Stratocaster"}, nil
+				FindGuitarByIDFunc: func(ctx context.Context, id int) (repo.Guitar, error) {
+					return repo.Guitar{ID: 1, Brand: "Fender", Model: "Stratocaster"}, nil
 				},
 			},
 			expectedStatus: http.StatusOK,
@@ -128,8 +145,8 @@ func TestFindGuitarByID(t *testing.T) {
 			name:     "service error",
 			guitarID: "1",
 			mockService: &MockService{
-				FindGuitarByIDFunc: func(ctx context.Context, id int) (Guitar, error) {
-					return Guitar{}, errors.New("not found")
+				FindGuitarByIDFunc: func(ctx context.Context, id int) (repo.Guitar, error) {
+					return repo.Guitar{}, errors.New("not found")
 				},
 			},
 			expectedStatus: http.StatusInternalServerError,
@@ -169,9 +186,8 @@ func TestCreateGuitar(t *testing.T) {
 				Model: "Telecaster",
 			},
 			mockService: &MockService{
-				CreateGuitarFunc: func(ctx context.Context, guitar Guitar) (Guitar, error) {
-					guitar.ID = 1
-					return guitar, nil
+				CreateGuitarFunc: func(ctx context.Context, guitar Guitar) (repo.Guitar, error) {
+					return repo.Guitar{ID: 1, Brand: guitar.Brand, Model: guitar.Model}, nil
 				},
 			},
 			expectedStatus: http.StatusCreated,
@@ -189,8 +205,8 @@ func TestCreateGuitar(t *testing.T) {
 				Model: "Telecaster",
 			},
 			mockService: &MockService{
-				CreateGuitarFunc: func(ctx context.Context, guitar Guitar) (Guitar, error) {
-					return Guitar{}, errors.New("database error")
+				CreateGuitarFunc: func(ctx context.Context, guitar Guitar) (repo.Guitar, error) {
+					return repo.Guitar{}, errors.New("database error")
 				},
 			},
 			expectedStatus: http.StatusInternalServerError,
@@ -237,8 +253,8 @@ func TestUpdateGuitar(t *testing.T) {
 				Model: "Stratocaster Updated",
 			},
 			mockService: &MockService{
-				UpdateGuitarFunc: func(ctx context.Context, guitar Guitar) (Guitar, error) {
-					return guitar, nil
+				UpdateGuitarFunc: func(ctx context.Context, guitar Guitar) (repo.Guitar, error) {
+					return repo.Guitar{ID: guitar.ID, Brand: guitar.Brand, Model: guitar.Model}, nil
 				},
 			},
 			expectedStatus: http.StatusCreated,
@@ -265,8 +281,8 @@ func TestUpdateGuitar(t *testing.T) {
 				Model: "Stratocaster",
 			},
 			mockService: &MockService{
-				UpdateGuitarFunc: func(ctx context.Context, guitar Guitar) (Guitar, error) {
-					return Guitar{}, errors.New("database error")
+				UpdateGuitarFunc: func(ctx context.Context, guitar Guitar) (repo.Guitar, error) {
+					return repo.Guitar{}, errors.New("database error")
 				},
 			},
 			expectedStatus: http.StatusInternalServerError,
@@ -350,6 +366,217 @@ func TestDeleteGuitar(t *testing.T) {
 
 			if w.Code != tt.expectedStatus {
 				t.Errorf("expected status %d, got %d", tt.expectedStatus, w.Code)
+			}
+		})
+	}
+}
+
+func TestDisplayName(t *testing.T) {
+	year1980 := int16(1980)
+	year2020 := int16(2020)
+	
+	tests := []struct {
+		name           string
+		guitarID       string
+		mockService    *MockService
+		expectedStatus int
+		expectedBody   string
+	}{
+		{
+			name:     "success - vintage guitar",
+			guitarID: "1",
+			mockService: &MockService{
+				FindGuitarByIDFunc: func(ctx context.Context, id int) (repo.Guitar, error) {
+					return repo.Guitar{
+						ID:    1,
+						Brand: "Fender",
+						Model: "Stratocaster",
+						Year:  &year1980,
+					}, nil
+				},
+				DisplayNameFunc: func(ctx context.Context, g repo.Guitar) string {
+					return "1980 Fender Stratocaster (Vintage)"
+				},
+			},
+			expectedStatus: http.StatusOK,
+			expectedBody:   "1980 Fender Stratocaster (Vintage)",
+		},
+		{
+			name:     "success - modern guitar",
+			guitarID: "2",
+			mockService: &MockService{
+				FindGuitarByIDFunc: func(ctx context.Context, id int) (repo.Guitar, error) {
+					return repo.Guitar{
+						ID:    2,
+						Brand: "Gibson",
+						Model: "Les Paul",
+						Year:  &year2020,
+					}, nil
+				},
+				DisplayNameFunc: func(ctx context.Context, g repo.Guitar) string {
+					return "2020 Gibson Les Paul"
+				},
+			},
+			expectedStatus: http.StatusOK,
+			expectedBody:   "2020 Gibson Les Paul",
+		},
+		{
+			name:     "success - guitar without year",
+			guitarID: "3",
+			mockService: &MockService{
+				FindGuitarByIDFunc: func(ctx context.Context, id int) (repo.Guitar, error) {
+					return repo.Guitar{
+						ID:    3,
+						Brand: "Ibanez",
+						Model: "RG",
+						Year:  nil,
+					}, nil
+				},
+				DisplayNameFunc: func(ctx context.Context, g repo.Guitar) string {
+					return "Ibanez RG"
+				},
+			},
+			expectedStatus: http.StatusOK,
+			expectedBody:   "Ibanez RG",
+		},
+		{
+			name:           "invalid id",
+			guitarID:       "abc",
+			mockService:    &MockService{},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:     "guitar not found",
+			guitarID: "999",
+			mockService: &MockService{
+				FindGuitarByIDFunc: func(ctx context.Context, id int) (repo.Guitar, error) {
+					return repo.Guitar{}, errors.New("guitar not found")
+				},
+			},
+			expectedStatus: http.StatusInternalServerError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			h := NewHandler(tt.mockService)
+			req := httptest.NewRequest(http.MethodGet, "/guitars/name/"+tt.guitarID, nil)
+			w := httptest.NewRecorder()
+
+			rctx := chi.NewRouteContext()
+			rctx.URLParams.Add("id", tt.guitarID)
+			req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+			h.DisplayName(w, req)
+
+			if w.Code != tt.expectedStatus {
+				t.Errorf("expected status %d, got %d", tt.expectedStatus, w.Code)
+			}
+
+			if tt.expectedBody != "" {
+				var response string
+				if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
+					t.Errorf("failed to unmarshal response: %v", err)
+				}
+				if response != tt.expectedBody {
+					t.Errorf("expected body %q, got %q", tt.expectedBody, response)
+				}
+			}
+		})
+	}
+}
+
+func TestIsVintage(t *testing.T) {
+	year1980 := int16(1980)
+	year2020 := int16(2020)
+	
+	tests := []struct {
+		name           string
+		guitarID       string
+		mockService    *MockService
+		expectedStatus int
+		expectedBody   bool
+	}{
+		{
+			name:     "success - vintage guitar",
+			guitarID: "1",
+			mockService: &MockService{
+				FindGuitarByIDFunc: func(ctx context.Context, id int) (repo.Guitar, error) {
+					return repo.Guitar{
+						ID:    1,
+						Brand: "Fender",
+						Model: "Stratocaster",
+						Year:  &year1980,
+					}, nil
+				},
+				IsVintageFunc: func(ctx context.Context, g repo.Guitar) bool {
+					return true
+				},
+			},
+			expectedStatus: http.StatusOK,
+			expectedBody:   true,
+		},
+		{
+			name:     "success - not vintage guitar",
+			guitarID: "2",
+			mockService: &MockService{
+				FindGuitarByIDFunc: func(ctx context.Context, id int) (repo.Guitar, error) {
+					return repo.Guitar{
+						ID:    2,
+						Brand: "Gibson",
+						Model: "Les Paul",
+						Year:  &year2020,
+					}, nil
+				},
+				IsVintageFunc: func(ctx context.Context, g repo.Guitar) bool {
+					return false
+				},
+			},
+			expectedStatus: http.StatusOK,
+			expectedBody:   false,
+		},
+		{
+			name:           "invalid id",
+			guitarID:       "abc",
+			mockService:    &MockService{},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:     "guitar not found",
+			guitarID: "999",
+			mockService: &MockService{
+				FindGuitarByIDFunc: func(ctx context.Context, id int) (repo.Guitar, error) {
+					return repo.Guitar{}, errors.New("guitar not found")
+				},
+			},
+			expectedStatus: http.StatusInternalServerError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			h := NewHandler(tt.mockService)
+			req := httptest.NewRequest(http.MethodGet, "/guitars/vintage/"+tt.guitarID, nil)
+			w := httptest.NewRecorder()
+
+			rctx := chi.NewRouteContext()
+			rctx.URLParams.Add("id", tt.guitarID)
+			req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+			h.IsVintage(w, req)
+
+			if w.Code != tt.expectedStatus {
+				t.Errorf("expected status %d, got %d", tt.expectedStatus, w.Code)
+			}
+
+			if tt.expectedStatus == http.StatusOK {
+				var response bool
+				if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
+					t.Errorf("failed to unmarshal response: %v", err)
+				}
+				if response != tt.expectedBody {
+					t.Errorf("expected body %v, got %v", tt.expectedBody, response)
+				}
 			}
 		})
 	}
