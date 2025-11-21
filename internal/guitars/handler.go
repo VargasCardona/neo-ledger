@@ -115,3 +115,48 @@ func (h *handler) DeleteGuitar(w http.ResponseWriter, r *http.Request) {
 
 	json.Write(w, http.StatusNoContent, nil)
 }
+
+func (h *handler) DisplayName(w http.ResponseWriter, r *http.Request) {
+  id := chi.URLParam(r, "id")
+
+  guitarID, err := strconv.Atoi(id)
+    if err != nil {
+      http.Error(w, "invalid guitar id", http.StatusBadRequest)
+      return
+  }
+
+	guitar, err := h.service.FindGuitarByID(r.Context(), guitarID)
+
+	if err != nil {
+		log.Println(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	displayName := h.service.DisplayName(r.Context(), guitar)
+
+	json.Write(w, http.StatusOK, displayName)
+}
+
+
+func (h *handler) IsVintage(w http.ResponseWriter, r *http.Request) {
+  id := chi.URLParam(r, "id")
+
+  guitarID, err := strconv.Atoi(id)
+    if err != nil {
+      http.Error(w, "invalid guitar id", http.StatusBadRequest)
+      return
+  }
+
+	guitar, err := h.service.FindGuitarByID(r.Context(), guitarID)
+
+	if err != nil {
+		log.Println(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	isVintage := h.service.IsVintage(r.Context(), guitar)
+
+	json.Write(w, http.StatusOK, isVintage)
+}

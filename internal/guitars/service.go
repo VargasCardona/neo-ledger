@@ -2,6 +2,9 @@ package guitars
 
 import (
 	"context"
+  "fmt"
+	"strings"
+	"time"
 	"github.com/jackc/pgx/v5"
 	repo "github.com/vargascardona/neo-ledger/internal/adapters/postgresql/sqlc"
 )
@@ -12,6 +15,8 @@ type Service interface {
 	CreateGuitar(ctx context.Context, tempGuitar Guitar) (repo.Guitar, error)
 	UpdateGuitar(ctx context.Context, tempGuitar Guitar) (repo.Guitar, error)
 	DeleteGuitar(ctx context.Context, id int) error
+  DisplayName(ctx context.Context, g repo.Guitar) string
+  IsVintage(ctx context.Context, g repo.Guitar) bool
 }
 
 type svc struct {
@@ -87,6 +92,37 @@ func (s *svc) UpdateGuitar(ctx context.Context, tempGuitar Guitar) (repo.Guitar,
 
 func (s *svc) DeleteGuitar(ctx context.Context, id int) (error) {
 	return s.repo.DeleteGuitar(ctx, int64(id))
+}
+
+func (s *svc) DisplayName(ctx context.Context, g repo.Guitar) string {
+	parts := []string{}
+
+	year := 0
+	if g.Year != nil {
+		year = int(*g.Year)
+	}
+	if year >= 1900 && year <= time.Now().Year() {
+		parts = append(parts, fmt.Sprintf("%d", year))
+	}
+
+	brand := strings.TrimSpace(g.Brand)
+	model := strings.TrimSpace(g.Model)
+	parts = append(parts, brand, model)
+
+	if year > 0 && time.Now().Year()-year >= 40 {
+		parts = append(parts, "(Vintage)")
+	}
+
+	if len(parts) == 2 {
+		return brand + " " + model
+	}
+	return strings.Join(parts, " ")
+}
+
+func (s *svc) IsVintage(_ context.Context, g repo.Guitar) bool {
+	year := int(*g.Year)
+	currentYear := time.Now().Year()
+	return year > 0 && currentYear-year >= 40
 }
 
 func intToInt16Ptr(i *int) *int16 {

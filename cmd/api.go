@@ -27,6 +27,8 @@ func (app *application) mount() http.Handler {
 
 	guitarService := guitars.NewService(repo.New(app.db), app.db)
 	guitarHandler := guitars.NewHandler(guitarService)
+	r.Get("/guitars/name/{id}", guitarHandler.DisplayName)
+	r.Get("/guitars/vintage/{id}", guitarHandler.IsVintage)
 	r.Get("/guitars", guitarHandler.ListGuitars)
 	r.Get("/guitars/{id}", guitarHandler.FindGuitarByID)
 	r.Post("/guitars", guitarHandler.CreateGuitar)
